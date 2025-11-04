@@ -11,7 +11,7 @@ grid = {
         for i=1,this.grid_size do
             row = {}
             for j=1,this.grid_size do
-                row[j] = (i+j) % 2
+                row[j] = 2 + (i+j) % 2
             end
             this.canvas[i] = row
         end
@@ -47,6 +47,10 @@ game_pane = {
             row = {}
             for j=1,grid.grid_size do
                 row[j] = 7 // Make the grid white
+
+                if j == 5 then
+                    row[j] = 0
+                end
             end
             this.canvas[i] = row
         end
@@ -90,14 +94,16 @@ option_pane = {
 cursor = {
     x=4, y=4,
 
+    color = 1,
+    
     control=function(this)
         nx = this.x ny = this.y
 
         // Control the next position
-        if btnp(0) then nx -= 1 end
-        if btnp(1) then nx += 1 end
-        if btnp(2) then ny -= 1 end
-        if btnp(3) then ny += 1 end
+        if btnp(0) then nx -= 1
+        elseif btnp(1) then nx += 1
+        elseif btnp(2) then ny -= 1
+        elseif btnp(3) then ny += 1 end
 
         // Clamp the position onto the grid.
         if nx > grid.grid_size then nx = grid.grid_size end
@@ -109,17 +115,36 @@ cursor = {
         this.x = nx this.y = ny
     end,
 
+    cycle_color=function(this)
+        if btnp(4) then this.color += 1 end
+        if this.color > 15 then this.color = 0 end
+    end,
+
+    write=function(this)
+        // Ignore if writing to a fufilled square
+        if game_pane.canvas[1][1] == grid.canvas[1][1] then return end
+
+
+    end,
+
     _update=function(this)
         this:control()
+        this:cycle_color()
+        this.write()
     end,
 
     _draw=function (this)
-        left = (game_pane.x + 1) + ((this.x-1) * 8)
-        top = (game_pane.y + 1) + ((this.y-1) * 8)
-        right = (game_pane.x + 1) + ((this.x) * 8) - 1
-        bottom = (game_pane.y + 1) + ((this.y) * 8) - 1
+        left = (game_pane.x + 1) + ((this.x-1) * 8) - 1
+        top = (game_pane.y + 1) + ((this.y-1) * 8) - 1
+        right = (game_pane.x + 1) + ((this.x) * 8)
+        bottom = (game_pane.y + 1) + ((this.y) * 8)
 
-        rect(left, top, right, bottom, 0)
+        rect(left, top, right, bottom, this.color)
+
+        rect(left, top, left, top, 15 - this.color)
+        rect(right, top, right, top, 15 - this.color)
+        rect(left, bottom, left, bottom, 15 - this.color)
+        rect(right, bottom, right, bottom, 15 - this.color)
     end
 }
 
