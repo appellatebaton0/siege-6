@@ -1,29 +1,46 @@
+-- Drawing Game for Siege 6
+-- Baton0
+
+hint_pane = {
+    x=5, y=5, sx=32, sy=32,
+
+    _draw=function(this)
+        rect(this.x, this.y, this.x + this.sx, this.y + this.sy, 0)
+    end
+}
+game_pane = {
+    x=5, y=41, sx=82, sy=82,
+
+    _draw=function(this)
+        rect(this.x, this.y, this.x + this.sx, this.y + this.sy, 0)
+    end
+}
+direct_pane = {
+    x=41, y=5, sx=46, sy=32,
+
+    _draw=function(this)
+        rect(this.x, this.y, this.x + this.sx, this.y + this.sy, 0)
+    end
+}
+option_pane = {
+    x=91, y=5, sx=32, sy=118,
+
+    _draw=function(this)
+        rect(this.x, this.y, this.x + this.sx, this.y + this.sy, 0)
+    end
+}
 
 o = 3
 
 function _draw()
     cls(4)
 
-    
-    canvas_size = 10
-
-    ox = 5 oy = 5 m = o
-    rectfill(ox,oy, 2 + (m * canvas_size) + ox, 2 + (m * canvas_size) + oy, 3)
-    rect(ox,oy, 2 + (m * canvas_size) + ox, 2 + (m * canvas_size) + oy, 0)
-
-    ox = 5 oy = 1 + (m * canvas_size) + (2 * ox) m = 11 - m
-    rectfill(ox,oy,2 + (m * canvas_size) + ox, 2 + (m * canvas_size) + oy,3)
-    rect(ox,oy,2 + (m * canvas_size) + ox, 2 + (m * canvas_size) + oy, 0)
-    
-
-    rectfill(91, 5, 123, 123,3)
-    rect(91, 5, 123, 123, 0)
-
-    rectfill(41, 5, 87, 37,3)
-    rect(41, 5, 87, 37, 0)
-    
     // ⬇️⬆️⬅️➡️ fo. future reference
 
+    hint_pane:_draw()
+    game_pane:_draw()
+    direct_pane:_draw()
+    option_pane:_draw()
 
     print("start", 98, 15, 0)
 end
