@@ -87,9 +87,49 @@ option_pane = {
     end
 }
 
+cursor = {
+    x=4, y=4,
+
+    control=function(this)
+        nx = this.x ny = this.y
+
+        // Control the next position
+        if btnp(0) then nx -= 1 end
+        if btnp(1) then nx += 1 end
+        if btnp(2) then ny -= 1 end
+        if btnp(3) then ny += 1 end
+
+        // Clamp the position onto the grid.
+        if nx > grid.grid_size then nx = grid.grid_size end
+        if nx < 1 then nx = 1 end
+        if ny > grid.grid_size then ny = grid.grid_size end
+        if ny < 1 then ny = 1 end
+
+        // Apply
+        this.x = nx this.y = ny
+    end,
+
+    _update=function(this)
+        this:control()
+    end,
+
+    _draw=function (this)
+        left = (game_pane.x + 1) + ((this.x-1) * 8)
+        top = (game_pane.y + 1) + ((this.y-1) * 8)
+        right = (game_pane.x + 1) + ((this.x) * 8) - 1
+        bottom = (game_pane.y + 1) + ((this.y) * 8) - 1
+
+        rect(left, top, right, bottom, 0)
+    end
+}
+
 function _init()
     grid:_init()
     game_pane:_init()
+end
+
+function _update()
+    cursor:_update()
 end
 
 function _draw()
@@ -101,6 +141,8 @@ function _draw()
     game_pane:_draw()
     direct_pane:_draw()
     option_pane:_draw()
+
+    cursor:_draw()
 
     print("start", 98, 15, 0)
 end
