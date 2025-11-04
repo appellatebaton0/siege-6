@@ -15,6 +15,11 @@ grid = {
             end
             this.canvas[i] = row
         end
+    end,
+
+    // Check the grids against each other to see if its complete.
+    attempt_win=function()
+
     end
 }
 
@@ -121,16 +126,20 @@ cursor = {
     end,
 
     write=function(this)
-        // Ignore if writing to a fufilled square
-        if game_pane.canvas[1][1] == grid.canvas[1][1] then return end
+        // Ignore if writing to a fufilled square / already that color
+        if game_pane.canvas[this.x][this.y] == grid.canvas[this.x][this.y] then return end
+        if game_pane.canvas[this.x][this.y] == this.color then return end
 
+        game_pane.canvas[this.x][this.y] = this.color
 
+        // Check for success
+        grid:attempt_win()
     end,
 
     _update=function(this)
         this:control()
         this:cycle_color()
-        this.write()
+        this:write()
     end,
 
     _draw=function (this)
