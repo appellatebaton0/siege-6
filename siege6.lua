@@ -8,6 +8,11 @@ function rectline(x, y, sx, sy, fill, outline)
     rect(x, y, x + sx, y + sy, outline)
 end
 
+function rectbord(x0, y0, x1, y1, fill, outline)
+    rectfill(x0, y0, x1, y1, fill)
+    rect(x0, y0, x1, y1, outline)
+end
+
 grid = {
     art = {},
     grid_size = 10,
@@ -153,20 +158,31 @@ direct_pane = {
     end,
 
     display_colors=function (this)
-        // Display prev. cur. nex. colors.
 
         offset = {x=this.x, y=this.y + 19}
-        rectline(offset.x,      offset.y + 2, 15, 10, this.colors.last,    0)
-        rectline(offset.x + 15, offset.y, 15, 12, this.colors.current, 0)
-        rectline(offset.x + 30, offset.y + 2, 15, 10, this.colors.next,    0)
-        //
 
-        
         xc = 6 if btn(5) then xc = 5 end 
         oc = 6 if btn(4) then oc = 5 end
 
-        print("❎", offset.x + 5,  offset.y - 5, xc)
-        print("🅾️", offset.x + 35, offset.y - 5, oc)
+        print("<- DRAW!", this.x + 3, this.y + 4, 0)
+
+        print("🅾️", offset.x + 5,  offset.y - 4, 5)
+        print("❎", offset.x + 35, offset.y - 4, 5)
+
+        print("🅾️", offset.x + 5,  offset.y - oc + 1, 6)
+        print("❎", offset.x + 35, offset.y - xc + 1, 6)
+
+        // Display prev. cur. nex. colors.
+
+        
+        rectbord(offset.x,      offset.y - oc + 8, offset.x + 15, offset.y + 12, this.colors.last,    0)
+        rectline(offset.x + 15, offset.y, 15, 12, this.colors.current, 0)
+        rectbord(offset.x + 30, offset.y - xc + 8, offset.x + 45, offset.y + 12, this.colors.next,    0)
+        //
+
+
+        
+        
 
         //rectline(this.x,      this.y + 23, 15, this.sy, this.colors.last, 0)
         //rectline(this.x + 15, this.y + 23, 29, this.sy, this.colors.current, 0)
@@ -216,8 +232,8 @@ cursor = {
     end,
 
     cycle_color=function(this)
-        if btnp(4) then this.color += 1 end
-        if btnp(5) then this.color -= 1 end
+        if btnp(5) then this.color += 1 end
+        if btnp(4) then this.color -= 1 end
 
         if this.color > 15 then this.color = 0 end
         if this.color < 0 then this.color = 15 end
