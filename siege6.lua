@@ -13,6 +13,74 @@ function rectbord(x0, y0, x1, y1, fill, outline)
     rect(x0, y0, x1, y1, outline)
 end
 
+function move_towards(from, to, delta)
+    amount = to - from
+
+    // Make sure you dont move more than allowed by delta.
+    if amount < 0 then amount = max(-delta, amount)
+elseif amount > 0 then amount = min( delta, amount) end
+
+    return from + amount
+end
+
+// Anything relating to the current time and state of the game.
+state = {
+
+    draw_time = 0.0,
+
+    // A table of all the time values for each level. Lookup table of the log function time = 30 - log10(i)
+    time_table = {60,55,53,51,50,48,47,46,46,45,44,44,43,43,42,42,42,41,41,40,40,40,40,39,39,39,39,38,38,38,38,37,37,37,37,37,36,36,36,36,36,36,35,35,35,35,35,35,35,35,34,34,34,34,34,34,34,34,33,33,33,33,33,33,33,33,33,33,32,32,32,32,32,32,32,32,32,32,32,31,31,31,31,31,31,31,31,31,31,31,31,31,30,30,30,30,30,30,30},
+
+    _init=function (this)
+        // Start in the... start menu, duh.
+        //this.in_menu = true
+        
+        this.score = 0
+        this.current_level = 1
+
+        this:start_round()
+    end,
+
+    _update=function(this)
+        if not this.in_menu then
+            this.draw_time = move_towards(this.draw_time, 0, 1/30)
+        end
+    end,
+
+    start_round=function(this, level)
+        level = level or this.current_level
+        this.current_level = level
+
+        this.draw_time = this.time_table[level]
+
+        grid:reset_canvas()
+        game_pane:reset_canvas()
+
+    end,
+
+    attempt_win=function (this)
+
+        // Return if not a win.
+        for i=1,grid.grid_size do
+            for j=1,grid.grid_size do
+                if not (grid.canvas[i][j] == game_pane.canvas[i][j]) then return false end
+            end
+        end
+
+        // Won round!
+
+        // Add any spare time to the score
+        this.score += flr(7 * this.draw_time)
+
+        // Add the level value to the score
+        this.score += flr(10 * this.current_level)
+
+        this.current_level += 1
+        this:start_round()
+    end
+}
+
+// The space that holds the current art and runs everything relating to it.
 grid = {
     art = {},
     grid_size = 10,
@@ -69,24 +137,9 @@ grid = {
         }
     },
 
-    // Check the grids against each other to see if its complete.
-    attempt_win=function(this)
-
-        // Return if not a win.
-        for i=1,this.grid_size do
-            for j=1,this.grid_size do
-                if not (this.canvas[i][j] == game_pane.canvas[i][j]) then return false end
-            end
-        end
-
-        // Won!
-
-        this:reset_canvas()
-        game_pane:reset_canvas()
-        
-    end
 }
 
+// The space that tells the player what to draw
 hint_pane = {
     x=5, y=5, sx=32, sy=32,
 
@@ -106,6 +159,8 @@ hint_pane = {
         end
     end
 }
+
+// The space in which the player draws.
 game_pane = {
     x=5, y=41, sx=82, sy=82,
 
@@ -141,6 +196,8 @@ game_pane = {
         end
     end
 }
+
+// The space that tells the player more information about what is going on.
 direct_pane = {
     x=41, y=5, sx=45, sy=31,
 
@@ -195,12 +252,15 @@ direct_pane = {
     end
 }
 
+// The space that either gives more information or allows for customization.
 option_pane = {
     x=91, y=5, sx=32, sy=118,
 
     _draw=function(this)
         rectline(this.x, this.y, this.sx, this.sy, 3, 0)
         print("start", this.x + 7, this.y + 10, 0)
+        print(state.draw_time, this.x + 7, this.y + 16, 0)
+        print(state.score, this.x + 7, this.y + 22, 0)
     end
 }
 
@@ -227,8 +287,7 @@ cursor = {
 
         // Apply
         this.x = nx this.y = ny
-
-        grid:attempt_win()
+        
     end,
 
     cycle_color=function(this)
@@ -249,7 +308,7 @@ cursor = {
         game_pane.canvas[this.x][this.y] = this.color
 
         // Check for success
-        grid:attempt_win()
+        state:attempt_win()
     end,
 
     _update=function(this)
@@ -274,11 +333,14 @@ function _init()
     grid:_init()
     game_pane:_init()
 
+    state:_init()
+
     direct_pane:update_colors()
 end
 
 function _update()
     cursor:_update()
+    state:_update()
 end
 
 function _draw()
