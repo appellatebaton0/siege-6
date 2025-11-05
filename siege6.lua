@@ -1,6 +1,13 @@
 -- Drawing Game for Siege 6
 -- Baton0
 
+// Helper Functions
+
+function rectline(x, y, sx, sy, fill, outline)
+    rectfill(x, y, x + sx, y + sy, fill)
+    rect(x, y, x + sx, y + sy, outline)
+end
+
 grid = {
     art = {},
     grid_size = 10,
@@ -119,28 +126,65 @@ game_pane = {
         canvas = this.canvas
         for i=1,grid.grid_size do
             for j=1,grid.grid_size do
-                left = (this.x + 1) + ((i-1) * 8)
-                top = (this.y + 1) + ((j-1) * 8)
-                right = (this.x + 1) + ((i) * 8) - 1
-                bottom = (this.y + 1) + ((j) * 8) - 1
-
-                rectfill(left, top, right, bottom, canvas[i][j])
+                rectfill(
+                    (this.x + 1) + ((i-1) * 8), 
+                    (this.y + 1) + ((j-1) * 8), 
+                    (this.x + 1) + ((i) * 8) - 1, 
+                    (this.y + 1) + ((j) * 8) - 1,
+                     canvas[i][j])
             end
         end
     end
 }
 direct_pane = {
-    x=41, y=5, sx=46, sy=32,
+    x=41, y=5, sx=45, sy=31,
+
+    colors = {last = 0, current = 0, next = 0},
+    update_colors=function (this)
+        this.colors.current = cursor.color
+        this.colors.last = cursor.color - 1
+        this.colors.next = cursor.color + 1
+
+        if this.colors.next > 15 then this.colors.next = 0 end
+        if this.colors.next < 0  then this.colors.next = 15 end
+
+        if this.colors.last > 15 then this.colors.last = 0 end
+        if this.colors.last < 0  then this.colors.last = 15 end
+    end,
+
+    display_colors=function (this)
+        // Display prev. cur. nex. colors.
+
+        offset = {x=this.x, y=this.y + 19}
+        rectline(offset.x,      offset.y + 2, 15, 10, this.colors.last,    0)
+        rectline(offset.x + 15, offset.y, 15, 12, this.colors.current, 0)
+        rectline(offset.x + 30, offset.y + 2, 15, 10, this.colors.next,    0)
+        //
+
+        
+        xc = 6 if btn(5) then xc = 5 end 
+        oc = 6 if btn(4) then oc = 5 end
+
+        print("❎", offset.x + 5,  offset.y - 5, xc)
+        print("🅾️", offset.x + 35, offset.y - 5, oc)
+
+        //rectline(this.x,      this.y + 23, 15, this.sy, this.colors.last, 0)
+        //rectline(this.x + 15, this.y + 23, 29, this.sy, this.colors.current, 0)
+        //rectline(this.x + 29, this.y + 23, 45, this.sy, this.colors.next, 0)
+    end,
 
     _draw=function(this)
-        rect(this.x, this.y, this.x + this.sx - 1, this.y + this.sy - 1, 0)
+        rectline(this.x, this.y, this.sx, this.sy, 3, 0)
+        this:display_colors()
     end
 }
+
 option_pane = {
     x=91, y=5, sx=32, sy=118,
 
     _draw=function(this)
-        rect(this.x, this.y, this.x + this.sx - 1, this.y + this.sy - 1, 0)
+        rectline(this.x, this.y, this.sx, this.sy, 3, 0)
+        print("start", this.x + 7, this.y + 10, 0)
     end
 }
 
@@ -173,7 +217,12 @@ cursor = {
 
     cycle_color=function(this)
         if btnp(4) then this.color += 1 end
+        if btnp(5) then this.color -= 1 end
+
         if this.color > 15 then this.color = 0 end
+        if this.color < 0 then this.color = 15 end
+
+        direct_pane:update_colors()
     end,
 
     write=function(this)
@@ -194,23 +243,22 @@ cursor = {
     end,
 
     _draw=function (this)
+        // Draw the cursor to its target position.
         left = (game_pane.x + 1) + ((this.x-1) * 8) - 1
         top = (game_pane.y + 1) + ((this.y-1) * 8) - 1
         right = (game_pane.x + 1) + ((this.x) * 8)
         bottom = (game_pane.y + 1) + ((this.y) * 8)
 
         rect(left, top, right, bottom, this.color)
-
-        rect(left, top, left, top, 15 - this.color)
-        rect(right, top, right, top, 15 - this.color)
-        rect(left, bottom, left, bottom, 15 - this.color)
-        rect(right, bottom, right, bottom, 15 - this.color)
     end
 }
 
 function _init()
+    // Initialize the panes and anything else.
     grid:_init()
     game_pane:_init()
+
+    direct_pane:update_colors()
 end
 
 function _update()
@@ -218,7 +266,7 @@ function _update()
 end
 
 function _draw()
-    cls(4)
+    cls(1)
 
     // ⬇️⬆️⬅️➡️ fo. future reference
 
@@ -229,5 +277,5 @@ function _draw()
 
     cursor:_draw()
 
-    print("start", 98, 15, 0)
+    
 end
