@@ -5,21 +5,73 @@ grid = {
     art = {},
     grid_size = 10,
 
-    _init=function (this)
+    reset_canvas=function(this)
+        while true do
+            next_index = flr(rnd(#this.canvas_options) + 1)
+
+            if next_index != this.current_index then break end
+        end
+
         this.canvas = {}
 
         for i=1,this.grid_size do
             row = {}
             for j=1,this.grid_size do
-                row[j] = 2 + (i+j) % 2
+                row[j] = this.canvas_options[next_index][i][j]
             end
             this.canvas[i] = row
         end
+
+        this.current_index = next_index
     end,
 
-    // Check the grids against each other to see if its complete.
-    attempt_win=function()
+    _init=function (this)
+        this.current_index = -1
+        this:reset_canvas()
+    end,
 
+    canvas_options = {
+        {
+            {0,0,0,0,0,0,0,0,0,0},
+            {0,3,6,6,6,6,6,6,6,0},
+            {0,3,0,0,0,0,0,0,5,0},
+            {0,3,0,0,0,0,0,0,5,0},
+            {0,3,0,0,0,0,0,0,5,0},
+            {0,3,0,0,0,0,0,0,5,0},
+            {0,3,0,0,0,0,0,0,5,0},
+            {0,3,0,0,0,0,0,0,5,0},
+            {0,4,4,4,4,4,4,4,5,0},
+            {0,0,0,0,0,0,0,0,0,0},
+        },
+        {
+            {0,0,0,0,0,0,0,0,0,4},
+            {3,6,6,6,6,6,6,6,0,5},
+            {3,0,0,0,0,0,0,5,0,6},
+            {3,0,0,0,0,0,0,5,0,5},
+            {3,0,0,0,0,0,0,5,0,4},
+            {3,0,0,0,0,0,0,5,0,5},
+            {3,0,0,0,0,0,0,5,0,6},
+            {3,0,0,0,0,0,0,5,0,5},
+            {4,4,4,4,4,4,4,5,0,4},
+            {0,0,0,0,0,0,0,0,0,3},
+        }
+    },
+
+    // Check the grids against each other to see if its complete.
+    attempt_win=function(this)
+
+        // Return if not a win.
+        for i=1,this.grid_size do
+            for j=1,this.grid_size do
+                if not (this.canvas[i][j] == game_pane.canvas[i][j]) then return false end
+            end
+        end
+
+        // Won!
+
+        this:reset_canvas()
+        game_pane:reset_canvas()
+        
     end
 }
 
@@ -52,10 +104,6 @@ game_pane = {
             row = {}
             for j=1,grid.grid_size do
                 row[j] = 7 // Make the grid white
-
-                if j == 5 then
-                    row[j] = 0
-                end
             end
             this.canvas[i] = row
         end
@@ -105,10 +153,11 @@ cursor = {
         nx = this.x ny = this.y
 
         // Control the next position
-        if btnp(0) then nx -= 1
+        if     btnp(0) then nx -= 1
         elseif btnp(1) then nx += 1
         elseif btnp(2) then ny -= 1
-        elseif btnp(3) then ny += 1 end
+        elseif btnp(3) then ny += 1 
+        else return end
 
         // Clamp the position onto the grid.
         if nx > grid.grid_size then nx = grid.grid_size end
@@ -118,6 +167,8 @@ cursor = {
 
         // Apply
         this.x = nx this.y = ny
+
+        grid:attempt_win()
     end,
 
     cycle_color=function(this)
