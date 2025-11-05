@@ -32,13 +32,10 @@ state = {
     time_table = {60,55,53,51,50,48,47,46,46,45,44,44,43,43,42,42,42,41,41,40,40,40,40,39,39,39,39,38,38,38,38,37,37,37,37,37,36,36,36,36,36,36,35,35,35,35,35,35,35,35,34,34,34,34,34,34,34,34,33,33,33,33,33,33,33,33,33,33,32,32,32,32,32,32,32,32,32,32,32,31,31,31,31,31,31,31,31,31,31,31,31,31,30,30,30,30,30,30,30},
 
     _init=function (this)
-        // Start in the... start menu, duh.
-        //this.in_menu = true
+        this.in_menu = true
         
         this.score = 0
         this.current_level = 1
-
-        this:start_round()
     end,
 
     _update=function(this)
@@ -48,6 +45,8 @@ state = {
     end,
 
     start_round=function(this, level)
+        this.in_menu = false
+
         level = level or this.current_level
         this.current_level = level
 
@@ -162,7 +161,7 @@ hint_pane = {
 
 // The space in which the player draws.
 game_pane = {
-    x=5, y=41, sx=82, sy=82,
+    x=5, y=41, sx=81, sy=81,
 
     reset_canvas=function(this)
         this.canvas = {}
@@ -176,14 +175,7 @@ game_pane = {
         end
     end,
 
-    _init=function(this)
-        this:reset_canvas()
-    end,
-
-    _draw=function(this)
-        rect(this.x, this.y, this.x + this.sx - 1, this.y + this.sy - 1, 0)
-    
-        canvas = this.canvas
+    draw_canvas=function(this)
         for i=1,grid.grid_size do
             for j=1,grid.grid_size do
                 rectfill(
@@ -191,9 +183,19 @@ game_pane = {
                     (this.y + 1) + ((j-1) * 8), 
                     (this.x + 1) + ((i) * 8) - 1, 
                     (this.y + 1) + ((j) * 8) - 1,
-                     canvas[i][j])
+                    this.canvas[i][j])
             end
         end
+    end,
+
+    _init=function(this)
+        this:reset_canvas()
+    end,
+
+    _draw=function(this)
+        rectline(this.x, this.y, this.sx, this.sy, 3, 0)
+
+        if not state.in_menu then this:draw_canvas() end
     end
 }
 
@@ -256,11 +258,68 @@ direct_pane = {
 option_pane = {
     x=91, y=5, sx=32, sy=118,
 
-    _draw=function(this)
-        rectline(this.x, this.y, this.sx, this.sy, 3, 0)
-        print("start", this.x + 7, this.y + 10, 0)
+    menu_data = {
+        options = {"start", "optns"},
+        index = 1,
+    },
+
+    menu=function(this)
+
+        // Controlling the menu index
+        index = this.menu_data.index
+        options = this.menu_data.options
+        if btnp(2) or btnp(0) then index -= 1 end
+        if btnp(3) or btnp(1) then index += 1 end
+
+        // Clamp to the menu.
+        if index > #options then index = 1
+        elseif index < 1 then index = #options end
+
+        this.menu_data.index = index
+
+        
+
+        // Selecting a menu item
+        if btnp(5) then
+            if options[index] == "start" then
+                state:start_round()
+            end
+        end
+        
+    end,
+
+    scoreboard=function ()
+        
+    end,
+
+    draw_menu=function (this)
+        print("-menu-", this.x + 5, this.y + 5, 0)
+        for i=1,#this.menu_data.options do
+            if i == this.menu_data.index then
+                message = ">"..tostr(this.menu_data.options[i])
+            else
+                message = this.menu_data.options[i]
+            end
+
+            print(message, this.x + 5, this.y + 7 +  (10 * i), 0)
+        end
+    end,
+
+    draw_scoreboard=function (this)
         print(state.draw_time, this.x + 7, this.y + 16, 0)
         print(state.score, this.x + 7, this.y + 22, 0)
+    end,
+
+    _update=function(this)
+        if state.in_menu then this:menu() else this:scoreboard() end
+    end,
+
+    _draw=function(this)
+        rectline(this.x, this.y, this.sx, this.sy, 3, 0)
+
+        if state.in_menu then this:draw_menu() else this:draw_scoreboard() end
+        
+        
     end
 }
 
@@ -312,12 +371,16 @@ cursor = {
     end,
 
     _update=function(this)
-        this:control()
-        this:cycle_color()
-        this:write()
+        if not state.in_menu then
+            this:control()
+            this:cycle_color()
+            this:write()
+        end
     end,
 
     _draw=function (this)
+        if state.in_menu then return end
+
         // Draw the cursor to its target position.
         left = (game_pane.x + 1) + ((this.x-1) * 8) - 1
         top = (game_pane.y + 1) + ((this.y-1) * 8) - 1
@@ -341,6 +404,7 @@ end
 function _update()
     cursor:_update()
     state:_update()
+    option_pane:_update()
 end
 
 function _draw()
