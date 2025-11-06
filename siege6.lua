@@ -306,8 +306,15 @@ option_pane = {
     end,
 
     draw_scoreboard=function (this)
-        print(state.draw_time, this.x + 7, this.y + 16, 0)
-        print(state.score, this.x + 7, this.y + 22, 0)
+        
+        print("time", this.x + 5, this.y + 6, 0)
+        print(ceil(state.draw_time), this.x + 5, this.y + 15)
+
+        print("level", this.x + 5, this.y + 27)
+        print(state.current_level, this.x + 5, this.y + 36)
+
+        print("score", this.x + 5, this.y + 48)
+        print(state.score, this.x + 5, this.y + 57, 0)
     end,
 
     _update=function(this)
