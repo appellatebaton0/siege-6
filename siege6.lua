@@ -6,7 +6,7 @@
 outline_color = 0
 background_color = 1
 pane_color = 3
-transition_color = 5
+transition_color = 13
 
 function rectline(x, y, sx, sy, fill, outline)
     rectfill(x, y, x + sx, y + sy, fill)
@@ -68,6 +68,7 @@ state = {
                     menu_pane:change_menu("lose")
                     direct_pane:change_state("instructions")
                     game_pane:change_state("score")
+                    hint_pane:change_state("icon")
                 end
 
                 state:transition({menu_pane, game_pane, hint_pane, direct_pane})
@@ -272,6 +273,37 @@ grid = {
 hint_pane = {
     x=5, y=5, sx=31, sy=31,
 
+    change_state=function(this, to)
+        this.state = to
+    end,
+    state = "icon",
+    states = {
+        icon=function (this)
+            for i=1,grid.grid_size do
+                for j=1,grid.grid_size do
+                    left = (this.x + 1) + ((i-1) * 3)
+                    top = (this.y + 1) + ((j-1) * 3)
+                    right = (this.x + 1) + ((i) * 3) - 1
+                    bottom = (this.y + 1) + ((j) * 3) - 1
+
+                    rectfill(left, top, right, bottom, this.default[i][j])
+                end
+            end
+        end,
+        hint=function(this)
+            for i=1,grid.grid_size do
+                for j=1,grid.grid_size do
+                    left = (this.x + 1) + ((i-1) * 3)
+                    top = (this.y + 1) + ((j-1) * 3)
+                    right = (this.x + 1) + ((i) * 3) - 1
+                    bottom = (this.y + 1) + ((j) * 3) - 1
+
+                    rectfill(left, top, right, bottom, grid.canvas[i][j])
+                end
+            end
+        end
+    },
+
     default = {
         {13,13,13,13,13,13,13,13,13,13,},
         {13,1,1,1,13,1,1,13,13,13,},
@@ -285,22 +317,12 @@ hint_pane = {
         {13,13,13,13,13,13,13,13,13,13,},
     },
 
+    
+
     _draw=function(this)
         rect(this.x, this.y, this.x + this.sx, this.y + this.sy, outline_color)
 
-        canvas = grid.canvas
-        if state.in_menu then canvas = this.default end
-
-        for i=1,grid.grid_size do
-            for j=1,grid.grid_size do
-                left = (this.x + 1) + ((i-1) * 3)
-                top = (this.y + 1) + ((j-1) * 3)
-                right = (this.x + 1) + ((i) * 3) - 1
-                bottom = (this.y + 1) + ((j) * 3) - 1
-
-                rectfill(left, top, right, bottom, canvas[i][j])
-            end
-        end
+        this.states[this.state](this)
 
         if this.in_transition then
             rectfill(this.x + 1, this.y + 1, this.x + this.sx - 1, this.y + 1 + (this.sy - 2) * as_progress(state.transition_timer), transition_color)
@@ -488,6 +510,7 @@ menu_pane = {
                             this:change_menu("scoreboard")
                             direct_pane:change_state("colors")
                             game_pane:change_state("canvas")
+                            hint_pane:change_state("hint")
                         end
                         
                 elseif menu.options[this.index] == "optns" then
@@ -581,8 +604,14 @@ menu_pane = {
                     state.score = 0
 
                     if menu.options[this.index] == "again" then
-                        state:start_round()
-                        this:change_menu("scoreboard")
+                        state:transition({menu_pane, direct_pane, game_pane, hint_pane})
+                        state.transition_calls["lose2game"]=function()
+                            state:start_round()
+                            this:change_menu("scoreboard")
+                            direct_pane:change_state("colors")
+                            game_pane:change_state("canvas")
+                            hint_pane:change_state("hint")
+                        end
                 elseif menu.options[this.index] == "menu" then
                         this:change_menu("main")
                     end
