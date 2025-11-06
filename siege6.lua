@@ -37,6 +37,9 @@ state = {
 
     _init=function (this)
         this.in_menu = true
+
+        this.in_transition = false
+        this.transition_timer = 0.0
         
         this.score = 0
         this.current_level = 1
@@ -50,6 +53,34 @@ state = {
                 this.in_menu = true
                 menu_pane:change_menu("lose")
             end
+        elseif this.in_transition then
+            this.transition_timer = move_towards(this.transition_timer, 0, 1/30)
+
+            if this.transition_timer == 0.0 then
+                this:call_transition_calls()
+                this.in_transition = false
+                
+                for i, pane in pairs(this.transistors) do
+                    pane.in_transition = false
+                end
+            end
+        end
+    end,
+
+    transition_calls = {},
+    call_transition_calls=function (this)
+        for i, funct in pairs(this.transition_calls) do
+            funct()
+        end
+    end,
+    transistors = {},
+    transition=function(this, panes)
+        this.in_transition = true
+        this.transition_timer = 1.0
+
+        for i, pane in pairs(panes) do
+            pane.in_transition = true
+            transistors:insert(pane)
         end
     end,
 
@@ -212,10 +243,25 @@ grid = {
 hint_pane = {
     x=5, y=5, sx=32, sy=32,
 
+    default = {
+        {13,13,13,13,13,13,13,13,13,13,},
+        {13,1,1,1,13,1,1,13,13,13,},
+        {13,1,1,13,13,1,1,1,13,13,},
+        {13,13,13,13,13,1,1,1,14,13,},
+        {13,9,12,14,13,1,1,14,14,13,},
+        {13,8,11,10,13,7,1,14,14,13,},
+        {13,13,13,13,13,1,1,1,14,13,},
+        {13,1,1,1,13,1,1,1,13,13,},
+        {13,1,1,13,13,1,1,13,13,13,},
+        {13,13,13,13,13,13,13,13,13,13,},
+    },
+
     _draw=function(this)
         rect(this.x, this.y, this.x + this.sx - 1, this.y + this.sy - 1, outline_color)
 
         canvas = grid.canvas
+        if state.in_menu then canvas = this.default end
+
         for i=1,grid.grid_size do
             for j=1,grid.grid_size do
                 left = (this.x + 1) + ((i-1) * 3)
@@ -349,8 +395,12 @@ menu_pane = {
                 // Selecting a menu item
                 if btnp(5) then
                     if menu.options[this.index] == "start" then
-                        state:start_round()
-                        this:change_menu("scoreboard")
+                        state:transition()
+                        state.transition_calls["menu2start"]=function()
+                            state:start_round()
+                            this:change_menu("scoreboard")
+                        end
+                        
                 elseif menu.options[this.index] == "optns" then
                         this:change_menu("optns")
                     end
