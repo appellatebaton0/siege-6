@@ -6,6 +6,7 @@
 outline_color = 0
 background_color = 1
 pane_color = 3
+transition_color = 5
 
 function rectline(x, y, sx, sy, fill, outline)
     rectfill(x, y, x + sx, y + sy, fill)
@@ -27,22 +28,29 @@ elseif amount > 0 then amount = min( delta, amount) end
     return from + amount
 end
 
+function as_progress(value)
+    return max(0,1 - (4 * abs((value - 0.5) * (value - 0.5))))
+end
+
 // Anything relating to the current time and state of the game.
 state = {
 
     draw_time = 0.0,
 
     // A table of all the time values for each level. Lookup table of the log function time = 30 - log10(i)
-    time_table = {60,55,53,51,50,48,47,46,46,45,44,44,43,43,42,42,42,41,41,40,40,40,40,39,39,39,39,38,38,38,38,37,37,37,37,37,36,36,36,36,36,36,35,35,35,35,35,35,35,35,34,34,34,34,34,34,34,34,33,33,33,33,33,33,33,33,33,33,32,32,32,32,32,32,32,32,32,32,32,31,31,31,31,31,31,31,31,31,31,31,31,31,30,30,30,30,30,30,30},
+    time_table = {1.2,55,53,51,50,48,47,46,46,45,44,44,43,43,42,42,42,41,41,40,40,40,40,39,39,39,39,38,38,38,38,37,37,37,37,37,36,36,36,36,36,36,35,35,35,35,35,35,35,35,34,34,34,34,34,34,34,34,33,33,33,33,33,33,33,33,33,33,32,32,32,32,32,32,32,32,32,32,32,31,31,31,31,31,31,31,31,31,31,31,31,31,30,30,30,30,30,30,30},
 
     _init=function (this)
         this.in_menu = true
 
         this.in_transition = false
+        this.transistors_called = false
         this.transition_timer = 0.0
         
         this.score = 0
+        this.highscore = 0
         this.current_level = 1
+        this.highlevel = 0
     end,
 
     _update=function(this)
@@ -51,18 +59,37 @@ state = {
 
             if this.draw_time == 0 then
                 this.in_menu = true
-                menu_pane:change_menu("lose")
+
+                
+                if this.score > this.highscore then this.highscore = this.score end
+                if this.current_level > this.highlevel then this.highlevel = this.current_level end
+
+                state.transition_calls["game2lose"]=function()
+                    menu_pane:change_menu("lose")
+                    direct_pane:change_state("instructions")
+                    game_pane:change_state("score")
+                end
+
+                state:transition({menu_pane, game_pane, hint_pane, direct_pane})
             end
-        elseif this.in_transition then
+        end
+        if this.in_transition then
             this.transition_timer = move_towards(this.transition_timer, 0, 1/30)
 
-            if this.transition_timer == 0.0 then
+            if this.transition_timer <= 0.5 and not this.transistors_called then
                 this:call_transition_calls()
+                this.transistors_called = true
+            end
+
+            if this.transition_timer == 0.0 then
+                
                 this.in_transition = false
                 
                 for i, pane in pairs(this.transistors) do
                     pane.in_transition = false
                 end
+
+                this.transistors_called = false
             end
         end
     end,
@@ -72,6 +99,8 @@ state = {
         for i, funct in pairs(this.transition_calls) do
             funct()
         end
+
+        this.transition_calls = {}
     end,
     transistors = {},
     transition=function(this, panes)
@@ -80,7 +109,7 @@ state = {
 
         for i, pane in pairs(panes) do
             pane.in_transition = true
-            transistors:insert(pane)
+            this.transistors[#this.transistors+1] = pane
         end
     end,
 
@@ -241,7 +270,7 @@ grid = {
 
 // The space that tells the player what to draw
 hint_pane = {
-    x=5, y=5, sx=32, sy=32,
+    x=5, y=5, sx=31, sy=31,
 
     default = {
         {13,13,13,13,13,13,13,13,13,13,},
@@ -257,7 +286,7 @@ hint_pane = {
     },
 
     _draw=function(this)
-        rect(this.x, this.y, this.x + this.sx - 1, this.y + this.sy - 1, outline_color)
+        rect(this.x, this.y, this.x + this.sx, this.y + this.sy, outline_color)
 
         canvas = grid.canvas
         if state.in_menu then canvas = this.default end
@@ -272,12 +301,52 @@ hint_pane = {
                 rectfill(left, top, right, bottom, canvas[i][j])
             end
         end
+
+        if this.in_transition then
+            rectfill(this.x + 1, this.y + 1, this.x + this.sx - 1, this.y + 1 + (this.sy - 2) * as_progress(state.transition_timer), transition_color)
+        end
     end
 }
 
 // The space in which the player draws.
 game_pane = {
     x=5, y=41, sx=81, sy=81,
+
+    change_state=function(this, to)
+        this.state = to
+    end,
+    state = "welcome",
+    states = {
+        welcome=function (this)
+            print("pixel art panic", this.x + 5, this.y + 5)
+            print("-", this.x + 5, this.y + 12)
+            print("made for hackclub", this.x + 5, this.y + 19)
+            print("siege week 6", this.x + 5, this.y + 28)
+            print("by baton0", this.x + 5, this.y + 72)
+        end,
+        score=function(this)
+            print("ran out of time!", this.x + 5, this.y + 5)
+            print("-", this.x + 5, this.y + 12)
+        
+            print("reached level "..state.current_level, this.x + 5, this.y + 19)
+            print("high: level "..state.highlevel, this.x + 5, this.y + 27)
+
+            print("score: "..state.score, this.x + 5, this.y + 41)
+            print("highscore: "..state.highscore, this.x + 5, this.y + 49)
+        end,
+        canvas=function(this)
+            for i=1,grid.grid_size do
+                for j=1,grid.grid_size do
+                    rectfill(
+                        (this.x + 1) + ((i-1) * 8), 
+                        (this.y + 1) + ((j-1) * 8), 
+                        (this.x + 1) + ((i) * 8) - 1, 
+                        (this.y + 1) + ((j) * 8) - 1,
+                        this.canvas[i][j])
+                end
+            end
+        end,
+    },
 
     reset_canvas=function(this)
         this.canvas = {}
@@ -311,13 +380,65 @@ game_pane = {
     _draw=function(this)
         rectline(this.x, this.y, this.sx, this.sy, pane_color, outline_color)
 
-        if not state.in_menu then this:draw_canvas() end
+        this.states[this.state](this)
+
+        cursor:_draw()
+
+        if this.in_transition then
+            rectfill(this.x + 1, this.y + 1, this.x + this.sx - 1, this.y + 1 + (this.sy - 2) * as_progress(state.transition_timer), transition_color)
+        end
     end
 }
 
 // The space that tells the player more information about what is going on.
 direct_pane = {
     x=41, y=5, sx=45, sy=31,
+
+
+    change_state=function(this, to)
+        this.state = to
+    end,
+    state = "instructions",
+    states = {
+        instructions=function(this)
+            print("⬆️⬇️", this.x + 4, this.y + 5, 5)
+
+            dy = 0 if btn(3) or btn(1) then dy = 1 end
+            uy = 0 if btn(2) or btn(0) then uy = 1 end
+            
+            print("⬇️", this.x + 12,  this.y + 4 + dy, 6)
+            print("⬆️", this.x + 4, this.y + 4 + uy, 6)
+
+            print("NAVIGATE", this.x + 4, this.y + 10, 0)
+
+            xy = 0 if btn(5) then xy = 1 end
+
+            print("❎", this.x + 4, this.y + 18, 5)
+            print("❎", this.x + 4, this.y + 17 + xy, 6)
+
+            print("SELECT", this.x + 4, this.y + 23, 0)
+        end,
+
+        colors=function (this)
+            offset = {x=this.x, y=this.y + 19}
+
+            xy = 0 if btn(5) then xy = 1 end 
+            oy = 0 if btn(4) then oy = 1 end
+
+            print("<- DRAW!", this.x + 3, this.y + 4, 0)
+
+            print("🅾️", offset.x + 5,  offset.y - 4, 5)
+            print("❎", offset.x + 35, offset.y - 4, 5)
+
+            print("🅾️", offset.x + 5,  offset.y - 5 + oy, 6)
+            print("❎", offset.x + 35, offset.y - 5 + xy, 6)
+
+            // Display prev. cur. nex. colors.
+            rectbord(offset.x,      offset.y + 2 + oy, offset.x + 15, offset.y + 12, this.colors.last,    0)
+            rectline(offset.x + 15, offset.y,          15,            12,            this.colors.current, 0)
+            rectbord(offset.x + 30, offset.y + 2 + xy, offset.x + 45, offset.y + 12, this.colors.next,    0)
+        end
+    },
 
     colors = {last = 0, current = 0, next = 0},
     update_colors=function (this)
@@ -332,49 +453,15 @@ direct_pane = {
         if this.colors.last < 0  then this.colors.last = 15 end
     end,
 
-    display_colors=function (this)
-
-        offset = {x=this.x, y=this.y + 19}
-
-        xy = 0 if btn(5) then xy = 1 end 
-        oy = 0 if btn(4) then oy = 1 end
-
-        print("<- DRAW!", this.x + 3, this.y + 4, 0)
-
-        print("🅾️", offset.x + 5,  offset.y - 4, 5)
-        print("❎", offset.x + 35, offset.y - 4, 5)
-
-        print("🅾️", offset.x + 5,  offset.y - 5 + oy, 6)
-        print("❎", offset.x + 35, offset.y - 5 + xy, 6)
-
-        // Display prev. cur. nex. colors.
-        rectbord(offset.x,      offset.y + 2 + oy, offset.x + 15, offset.y + 12, this.colors.last,    0)
-        rectline(offset.x + 15, offset.y,          15,            12,            this.colors.current, 0)
-        rectbord(offset.x + 30, offset.y + 2 + xy, offset.x + 45, offset.y + 12, this.colors.next,    0)
-    end,
-
-    display_instructions=function(this)
-        print("⬆️⬇️", this.x + 4, this.y + 5, 5)
-
-        dy = 0 if btn(3) or btn(1) then dy = 1 end
-        uy = 0 if btn(2) or btn(0) then uy = 1 end
-        
-        print("⬇️", this.x + 12,  this.y + 4 + dy, 6)
-        print("⬆️", this.x + 4, this.y + 4 + uy, 6)
-
-        print("NAVIGATE", this.x + 4, this.y + 10, 0)
-
-        xy = 0 if btn(5) then xy = 1 end
-
-        print("❎", this.x + 4, this.y + 18, 5)
-        print("❎", this.x + 4, this.y + 17 + xy, 6)
-
-        print("SELECT", this.x + 4, this.y + 23, 0)
-    end,
-
     _draw=function(this)
         rectline(this.x, this.y, this.sx, this.sy, pane_color, outline_color)
-        if state.in_menu then this:display_instructions() else this:display_colors() end
+
+        // Show the current pane.
+        this.states[this.state](this)
+
+        if this.in_transition then
+            rectfill(this.x + 1, this.y + 1, this.x + this.sx - 1, this.y + 1 + (this.sy - 2) * as_progress(state.transition_timer), transition_color)
+        end
     end
 }
 
@@ -395,14 +482,20 @@ menu_pane = {
                 // Selecting a menu item
                 if btnp(5) then
                     if menu.options[this.index] == "start" then
-                        state:transition()
+                        state:transition({menu_pane, direct_pane, game_pane, hint_pane})
                         state.transition_calls["menu2start"]=function()
                             state:start_round()
                             this:change_menu("scoreboard")
+                            direct_pane:change_state("colors")
+                            game_pane:change_state("canvas")
                         end
                         
                 elseif menu.options[this.index] == "optns" then
-                        this:change_menu("optns")
+                        state:transition({menu_pane})
+                        state.transition_calls["menu2optns"]=function()
+                            this:change_menu("optns")
+                        end
+                        
                     end
                 end
             end,
@@ -421,6 +514,8 @@ menu_pane = {
 
         scoreboard = 
         {
+            options = {},
+
             _update=function(this, menu)
 
             end,
@@ -435,6 +530,7 @@ menu_pane = {
 
                 print("score", this.x + 5, this.y + 48)
                 print(state.score, this.x + 5, this.y + 57, 0)
+
             end,
         },
 
@@ -452,7 +548,11 @@ menu_pane = {
                     elseif menu.options[this.index] == "pane" then
                         pane_color += 1 if pane_color > 15 then pane_color = 0 end
                     elseif menu.options[this.index] == "back" then
-                        this:change_menu("main")
+                        
+                        state.transition_calls["optns2main"]=function()
+                            this:change_menu("main")
+                        end
+                        state:transition({menu_pane})
                     end
                 end
             end,
@@ -498,13 +598,6 @@ menu_pane = {
 
                     print(message, this.x + 5, this.y + 7 +  (10 * i), 0)
                 end
-
-                offset = {x=this.x, y=this.y + 50}
-                print("level", offset.x + 5, offset.y + 27)
-                print(state.current_level, offset.x + 5, offset.y + 36)
-
-                print("score", offset.x + 5, offset.y + 48)
-                print(state.score, offset.x + 5, offset.y + 57, 0)
             end
         }
 
@@ -544,6 +637,10 @@ menu_pane = {
         current_menu = this.menus[this.current_menu]
 
         current_menu._draw(this, current_menu)
+
+        if this.in_transition then
+            rectfill(this.x + 1, this.y + 1, this.x + this.sx - 1, this.y + 1 + (this.sy - 2) * as_progress(state.transition_timer), transition_color)
+        end
     end
 }
 
@@ -645,7 +742,7 @@ function _draw()
     direct_pane:_draw()
     menu_pane:_draw()
 
-    cursor:_draw()
+    
 
     
 end
