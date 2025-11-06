@@ -263,19 +263,57 @@ direct_pane = {
 }
 
 // The space that either gives more information or allows for customization.
-option_pane = {
+menu_pane = {
     x=91, y=5, sx=32, sy=118,
 
-    menu_data = {
-        options = {"start", "optns"},
-        index = 1,
+    menus = {
+        main = 
+        {
+            options = {"start", "optns"},
+
+            _update=function(this, menu)
+                // Selecting a menu item
+                if btnp(5) then
+                    if menu.options[this.index] == "start" then
+                        state:start_round()
+                    end
+                end
+            end,
+
+            _draw=function(this, menu)
+                print("-menu-", this.x + 5, this.y + 5, 0)
+                for i=1,#menu.options do
+                    if i == this.index then
+                        message = ">"..tostr(menu.options[i])
+                    else
+                        message = menu.options[i]
+                    end
+
+                    print(message, this.x + 5, this.y + 7 +  (10 * i), 0)
+                end
+            end
+        },
+
+        start = 
+        {
+
+        },
+
+        optns = 
+        {
+
+        }
     },
 
-    menu=function(this)
+    _init=function (this)
+        this.current_menu = "main"
+    end,
 
+    index = 1,
+    control_index=function (this)
         // Controlling the menu index
-        index = this.menu_data.index
-        options = this.menu_data.options
+        index = this.index
+        options = this.menus[this.current_menu].options
         if btnp(2) or btnp(0) then index -= 1 end
         if btnp(3) or btnp(1) then index += 1 end
 
@@ -283,17 +321,16 @@ option_pane = {
         if index > #options then index = 1
         elseif index < 1 then index = #options end
 
-        this.menu_data.index = index
+        this.index = index
+    end,
 
-        
+    menu=function(this)
 
-        // Selecting a menu item
-        if btnp(5) then
-            if options[index] == "start" then
-                state:start_round()
-            end
-        end
-        
+        if state.in_menu then this:control_index() end
+
+        current_menu = this.menus[this.current_menu]
+
+        current_menu._update(this, current_menu)
     end,
 
     scoreboard=function ()
@@ -301,16 +338,9 @@ option_pane = {
     end,
 
     draw_menu=function (this)
-        print("-menu-", this.x + 5, this.y + 5, 0)
-        for i=1,#this.menu_data.options do
-            if i == this.menu_data.index then
-                message = ">"..tostr(this.menu_data.options[i])
-            else
-                message = this.menu_data.options[i]
-            end
+        current_menu = this.menus[this.current_menu]
 
-            print(message, this.x + 5, this.y + 7 +  (10 * i), 0)
-        end
+        current_menu._draw(this, current_menu)
     end,
 
     draw_scoreboard=function (this)
@@ -410,6 +440,7 @@ function _init()
     // Initialize the panes and anything else.
     grid:_init()
     game_pane:_init()
+    menu_pane:_init()
 
     state:_init()
 
@@ -419,7 +450,7 @@ end
 function _update()
     cursor:_update()
     state:_update()
-    option_pane:_update()
+    menu_pane:_update()
 end
 
 function _draw()
@@ -430,7 +461,7 @@ function _draw()
     hint_pane:_draw()
     game_pane:_draw()
     direct_pane:_draw()
-    option_pane:_draw()
+    menu_pane:_draw()
 
     cursor:_draw()
 
