@@ -1,4 +1,4 @@
-# [TBD]
+# Pixel Art Panic
 My first full Pico-8 game; made for Hackclub's Siege week 6.
 The theme this week was Grid.
 
@@ -22,3 +22,9 @@ through colors.
 - Made the cursor be able to cycle both ways, and made the prev. and next colors show on the directions screen.
 - <img src="screenshots/cursor.png" width="50%">
 - Made it so when you finish a drawing, it instantly loads a new one (might make an animation for this later...)
+- After that, I worked on cleaning up some of the code and getting a bit of the menu working;
+- <img src="screenshots/start_menu.png" width="50%">
+### Thursday
+- Made the menu a lot cleaner than it was - went from hardcoded to each menu screen being its own table with functions for drawing and selecting options.
+- Added a lose screen, finally, and the options menu, though there's nothing on it.
+- <img src="screenshots/lost.png" width="50%">

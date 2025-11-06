@@ -29,7 +29,7 @@ state = {
     draw_time = 0.0,
 
     // A table of all the time values for each level. Lookup table of the log function time = 30 - log10(i)
-    time_table = {60,55,53,51,50,48,47,46,46,45,44,44,43,43,42,42,42,41,41,40,40,40,40,39,39,39,39,38,38,38,38,37,37,37,37,37,36,36,36,36,36,36,35,35,35,35,35,35,35,35,34,34,34,34,34,34,34,34,33,33,33,33,33,33,33,33,33,33,32,32,32,32,32,32,32,32,32,32,32,31,31,31,31,31,31,31,31,31,31,31,31,31,30,30,30,30,30,30,30},
+    time_table = {0,55,53,51,50,48,47,46,46,45,44,44,43,43,42,42,42,41,41,40,40,40,40,39,39,39,39,38,38,38,38,37,37,37,37,37,36,36,36,36,36,36,35,35,35,35,35,35,35,35,34,34,34,34,34,34,34,34,33,33,33,33,33,33,33,33,33,33,32,32,32,32,32,32,32,32,32,32,32,31,31,31,31,31,31,31,31,31,31,31,31,31,30,30,30,30,30,30,30},
 
     _init=function (this)
         this.in_menu = true
@@ -41,6 +41,11 @@ state = {
     _update=function(this)
         if not this.in_menu then
             this.draw_time = move_towards(this.draw_time, 0, 1/30)
+
+            if this.draw_time == 0 then
+                this.in_menu = true
+                menu_pane:change_menu("lose")
+            end
         end
     end,
 
@@ -266,6 +271,10 @@ direct_pane = {
 menu_pane = {
     x=91, y=5, sx=32, sy=118,
 
+    change_menu=function(this, to)
+        this.index = 1
+        this.current_menu = to
+    end,
     menus = {
         main = 
         {
@@ -276,6 +285,9 @@ menu_pane = {
                 if btnp(5) then
                     if menu.options[this.index] == "start" then
                         state:start_round()
+                        this:change_menu("scoreboard")
+                elseif menu.options[this.index] == "optns" then
+                        this:change_menu("optns")
                     end
                 end
             end,
@@ -283,26 +295,90 @@ menu_pane = {
             _draw=function(this, menu)
                 print("-menu-", this.x + 5, this.y + 5, 0)
                 for i=1,#menu.options do
-                    if i == this.index then
-                        message = ">"..tostr(menu.options[i])
-                    else
-                        message = menu.options[i]
-                    end
+
+                    message = menu.options[i] 
+                    if i == this.index then message = ">"..tostr(menu.options[i]) end
 
                     print(message, this.x + 5, this.y + 7 +  (10 * i), 0)
                 end
             end
         },
 
-        start = 
+        scoreboard = 
         {
+            _update=function(this, menu)
 
+            end,
+
+            _draw=function (this, menu)
+        
+                print("time", this.x + 5, this.y + 6, 0)
+                print(ceil(state.draw_time), this.x + 5, this.y + 15)
+
+                print("level", this.x + 5, this.y + 27)
+                print(state.current_level, this.x + 5, this.y + 36)
+
+                print("score", this.x + 5, this.y + 48)
+                print(state.score, this.x + 5, this.y + 57, 0)
+            end,
         },
 
         optns = 
         {
+            options = {"back"},
 
+            _update=function (this, menu)
+                // Selecting a menu item
+                if btnp(5) then
+                    if menu.options[this.index] == "back" then
+                        this:change_menu("main")
+                elseif menu.options[this.index] == "optns" then
+                        this:change_menu("optns")
+                    end
+                end
+            end,
+
+            _draw=function (this, menu)
+                print("-optns-", this.x + 5, this.y + 5, 0)
+                for i=1,#menu.options do
+
+                    message = menu.options[i] 
+                    if i == this.index then message = ">"..tostr(menu.options[i]) end
+
+                    print(message, this.x + 5, this.y + 7 +  (10 * i), 0)
+                end
+            end
+        },
+
+        lose = 
+        {
+            options = {"again", "menu"},
+
+            _update=function (this, menu)
+                // Selecting a menu item
+                if btnp(5) then
+                    if menu.options[this.index] == "again" then
+                        state:start_round()
+                        this:change_menu("scoreboard")
+                elseif menu.options[this.index] == "menu" then
+                        this:change_menu("main")
+                    end
+                end
+            end,
+
+            _draw=function (this, menu)
+                print("-lost-", this.x + 5, this.y + 5, 0)
+                for i=1,#menu.options do
+
+                    message = menu.options[i] 
+                    if i == this.index then message = ">"..tostr(menu.options[i]) end
+
+                    print(message, this.x + 5, this.y + 7 +  (10 * i), 0)
+                end
+            end
         }
+
+
     },
 
     _init=function (this)
@@ -324,8 +400,7 @@ menu_pane = {
         this.index = index
     end,
 
-    menu=function(this)
-
+    _update=function(this)
         if state.in_menu then this:control_index() end
 
         current_menu = this.menus[this.current_menu]
@@ -333,38 +408,12 @@ menu_pane = {
         current_menu._update(this, current_menu)
     end,
 
-    scoreboard=function ()
-        
-    end,
-
-    draw_menu=function (this)
-        current_menu = this.menus[this.current_menu]
-
-        current_menu._draw(this, current_menu)
-    end,
-
-    draw_scoreboard=function (this)
-        
-        print("time", this.x + 5, this.y + 6, 0)
-        print(ceil(state.draw_time), this.x + 5, this.y + 15)
-
-        print("level", this.x + 5, this.y + 27)
-        print(state.current_level, this.x + 5, this.y + 36)
-
-        print("score", this.x + 5, this.y + 48)
-        print(state.score, this.x + 5, this.y + 57, 0)
-    end,
-
-    _update=function(this)
-        if state.in_menu then this:menu() else this:scoreboard() end
-    end,
-
     _draw=function(this)
         rectline(this.x, this.y, this.sx, this.sy, 3, 0)
 
-        if state.in_menu then this:draw_menu() else this:draw_scoreboard() end
-        
-        
+        current_menu = this.menus[this.current_menu]
+
+        current_menu._draw(this, current_menu)
     end
 }
 
