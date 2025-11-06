@@ -1,4 +1,4 @@
--- Drawing Game for Siege 6
+-- Pixel Art Panic
 -- Baton0
 
 // Helper Functions
@@ -6,7 +6,7 @@
 outline_color = 0
 background_color = 1
 pane_color = 3
-transition_color = 13
+transition_color = 0
 
 function rectline(x, y, sx, sy, fill, outline)
     rectfill(x, y, x + sx, y + sy, fill)
@@ -38,7 +38,7 @@ state = {
     draw_time = 0.0,
 
     // A table of all the time values for each level. Lookup table of the log function time = 30 - log10(i)
-    time_table = {1.2,55,53,51,50,48,47,46,46,45,44,44,43,43,42,42,42,41,41,40,40,40,40,39,39,39,39,38,38,38,38,37,37,37,37,37,36,36,36,36,36,36,35,35,35,35,35,35,35,35,34,34,34,34,34,34,34,34,33,33,33,33,33,33,33,33,33,33,32,32,32,32,32,32,32,32,32,32,32,31,31,31,31,31,31,31,31,31,31,31,31,31,30,30,30,30,30,30,30},
+    time_table = {60,55,53,51,50,48,47,46,46,45,44,44,43,43,42,42,42,41,41,40,40,40,40,39,39,39,39,38,38,38,38,37,37,37,37,37,36,36,36,36,36,36,35,35,35,35,35,35,35,35,34,34,34,34,34,34,34,34,33,33,33,33,33,33,33,33,33,33,32,32,32,32,32,32,32,32,32,32,32,31,31,31,31,31,31,31,31,31,31,31,31,31,30,30,30,30,30,30,30},
 
     _init=function (this)
         this.in_menu = true
@@ -64,11 +64,13 @@ state = {
                 if this.score > this.highscore then this.highscore = this.score end
                 if this.current_level > this.highlevel then this.highlevel = this.current_level end
 
+                sfx(1)
                 state.transition_calls["game2lose"]=function()
                     menu_pane:change_menu("lose")
                     direct_pane:change_state("instructions")
                     game_pane:change_state("score")
                     hint_pane:change_state("icon")
+                    
                 end
 
                 state:transition({menu_pane, game_pane, hint_pane, direct_pane})
@@ -503,6 +505,7 @@ menu_pane = {
             _update=function(this, menu)
                 // Selecting a menu item
                 if btnp(5) then
+                    sfx(6)
                     if menu.options[this.index] == "start" then
                         state:transition({menu_pane, direct_pane, game_pane, hint_pane})
                         state.transition_calls["menu2start"]=function()
@@ -564,6 +567,7 @@ menu_pane = {
             _update=function (this, menu)
                 // Selecting a menu item
                 if btnp(5) then
+                    sfx(6)
                     if menu.options[this.index] == "screen" then
                         background_color += 1 if background_color > 15 then background_color = 0 end
                     elseif menu.options[this.index] == "outln" then
@@ -599,6 +603,7 @@ menu_pane = {
             _update=function (this, menu)
                 // Selecting a menu item
                 if btnp(5) then
+                    sfx(6)
 
                     state.current_level = 1
                     state.score = 0
@@ -642,8 +647,8 @@ menu_pane = {
         // Controlling the menu index
         index = this.index
         options = this.menus[this.current_menu].options
-        if btnp(2) or btnp(0) then index -= 1 end
-        if btnp(3) or btnp(1) then index += 1 end
+        if btnp(2) or btnp(0) then index -= 1 sfx(0) end
+        if btnp(3) or btnp(1) then index += 1 sfx(0) end
 
         // Clamp to the menu.
         if index > #options then index = 1
@@ -703,8 +708,8 @@ cursor = {
     end,
 
     cycle_color=function(this)
-        if btnp(5) then this.color += 1 end
-        if btnp(4) then this.color -= 1 end
+        if btnp(5) then this.color += 1 sfx(2) end
+        if btnp(4) then this.color -= 1 sfx(2) end
 
         if this.color > 15 then this.color = 0 end
         if this.color < 0 then this.color = 15 end
@@ -753,6 +758,8 @@ function _init()
     state:_init()
 
     direct_pane:update_colors()
+
+    music(0)
 end
 
 function _update()

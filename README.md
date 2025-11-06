@@ -28,4 +28,6 @@ through colors.
 - Made the menu a lot cleaner than it was - went from hardcoded to each menu screen being its own table with functions for drawing and selecting options.
 - Added a lose screen, finally, and the options menu, which lets you change the pane / outline / background colors.
 - <img src="screenshots/lost.png" width="50%"><img src="screenshots/options.png" width="50%">
-- The game is pretty much done now, now we just need ***polish***.
+- Added transitions between screens, and changed all the panes to be state machines like the menu for that.
+- Added music & SFX
+- The game is done now, so I'm just going to ***polish***
