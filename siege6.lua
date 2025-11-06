@@ -3,6 +3,10 @@
 
 // Helper Functions
 
+outline_color = 0
+background_color = 1
+pane_color = 3
+
 function rectline(x, y, sx, sy, fill, outline)
     rectfill(x, y, x + sx, y + sy, fill)
     rect(x, y, x + sx, y + sy, outline)
@@ -209,7 +213,7 @@ hint_pane = {
     x=5, y=5, sx=32, sy=32,
 
     _draw=function(this)
-        rect(this.x, this.y, this.x + this.sx - 1, this.y + this.sy - 1, 0)
+        rect(this.x, this.y, this.x + this.sx - 1, this.y + this.sy - 1, outline_color)
 
         canvas = grid.canvas
         for i=1,grid.grid_size do
@@ -259,7 +263,7 @@ game_pane = {
     end,
 
     _draw=function(this)
-        rectline(this.x, this.y, this.sx, this.sy, 3, 0)
+        rectline(this.x, this.y, this.sx, this.sy, pane_color, outline_color)
 
         if not state.in_menu then this:draw_canvas() end
     end
@@ -323,7 +327,7 @@ direct_pane = {
     end,
 
     _draw=function(this)
-        rectline(this.x, this.y, this.sx, this.sy, 3, 0)
+        rectline(this.x, this.y, this.sx, this.sy, pane_color, outline_color)
         if state.in_menu then this:display_instructions() else this:display_colors() end
     end
 }
@@ -386,27 +390,31 @@ menu_pane = {
 
         optns = 
         {
-            options = {"back"},
+            options = {"screen", "outln", "pane", "back"},
 
             _update=function (this, menu)
                 // Selecting a menu item
                 if btnp(5) then
-                    if menu.options[this.index] == "back" then
+                    if menu.options[this.index] == "screen" then
+                        background_color += 1 if background_color > 15 then background_color = 0 end
+                    elseif menu.options[this.index] == "outln" then
+                        outline_color += 1 if outline_color > 15 then outline_color = 0 end
+                    elseif menu.options[this.index] == "pane" then
+                        pane_color += 1 if pane_color > 15 then pane_color = 0 end
+                    elseif menu.options[this.index] == "back" then
                         this:change_menu("main")
-                elseif menu.options[this.index] == "optns" then
-                        this:change_menu("optns")
                     end
                 end
             end,
 
             _draw=function (this, menu)
-                print("-optns-", this.x + 5, this.y + 5, 0)
+                print("-optns-", this.x + 3, this.y + 5, 0)
                 for i=1,#menu.options do
 
                     message = menu.options[i] 
                     if i == this.index then message = ">"..tostr(menu.options[i]) end
 
-                    print(message, this.x + 5, this.y + 7 +  (10 * i), 0)
+                    print(message, this.x + 3, this.y + 7 +  (10 * i), 0)
                 end
             end
         },
@@ -418,6 +426,10 @@ menu_pane = {
             _update=function (this, menu)
                 // Selecting a menu item
                 if btnp(5) then
+
+                    state.current_level = 1
+                    state.score = 0
+
                     if menu.options[this.index] == "again" then
                         state:start_round()
                         this:change_menu("scoreboard")
@@ -436,6 +448,13 @@ menu_pane = {
 
                     print(message, this.x + 5, this.y + 7 +  (10 * i), 0)
                 end
+
+                offset = {x=this.x, y=this.y + 50}
+                print("level", offset.x + 5, offset.y + 27)
+                print(state.current_level, offset.x + 5, offset.y + 36)
+
+                print("score", offset.x + 5, offset.y + 48)
+                print(state.score, offset.x + 5, offset.y + 57, 0)
             end
         }
 
@@ -470,7 +489,7 @@ menu_pane = {
     end,
 
     _draw=function(this)
-        rectline(this.x, this.y, this.sx, this.sy, 3, 0)
+        rectline(this.x, this.y, this.sx, this.sy, pane_color, outline_color)
 
         current_menu = this.menus[this.current_menu]
 
@@ -483,14 +502,17 @@ cursor = {
 
     color = 1,
     
+    move_delay = 3,
+    move_timer = 0,
     control=function(this)
         nx = this.x ny = this.y
 
         // Control the next position
-        if     btnp(0) then nx -= 1
-        elseif btnp(1) then nx += 1
-        elseif btnp(2) then ny -= 1
-        elseif btnp(3) then ny += 1 
+        this.move_timer = move_towards(this.move_timer, 0, 1)
+        if     btn(0) and this.move_timer == 0 then nx -= 1 this.move_timer = this.move_delay
+        elseif btn(1) and this.move_timer == 0 then nx += 1 this.move_timer = this.move_delay
+        elseif btn(2) and this.move_timer == 0 then ny -= 1 this.move_timer = this.move_delay
+        elseif btn(3) and this.move_timer == 0 then ny += 1 this.move_timer = this.move_delay 
         else return end
 
         // Clamp the position onto the grid.
@@ -564,7 +586,7 @@ function _update()
 end
 
 function _draw()
-    cls(1)
+    cls(background_color)
 
     // ⬇️⬆️⬅️➡️ fo. future reference
 

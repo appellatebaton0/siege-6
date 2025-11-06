@@ -26,5 +26,5 @@ through colors.
 - <img src="screenshots/start_menu.png" width="50%">
 ### Thursday
 - Made the menu a lot cleaner than it was - went from hardcoded to each menu screen being its own table with functions for drawing and selecting options.
-- Added a lose screen, finally, and the options menu, though there's nothing on it.
-- <img src="screenshots/lost.png" width="50%">
+- Added a lose screen, finally, and the options menu, which lets you change the pane / outline / background colors.
+- <img src="screenshots/lost.png" width="50%"><img src="screenshots/options.png" width="50%">
