@@ -220,37 +220,45 @@ direct_pane = {
 
         offset = {x=this.x, y=this.y + 19}
 
-        xc = 6 if btn(5) then xc = 5 end 
-        oc = 6 if btn(4) then oc = 5 end
+        xy = 0 if btn(5) then xy = 1 end 
+        oy = 0 if btn(4) then oy = 1 end
 
         print("<- DRAW!", this.x + 3, this.y + 4, 0)
 
         print("🅾️", offset.x + 5,  offset.y - 4, 5)
         print("❎", offset.x + 35, offset.y - 4, 5)
 
-        print("🅾️", offset.x + 5,  offset.y - oc + 1, 6)
-        print("❎", offset.x + 35, offset.y - xc + 1, 6)
+        print("🅾️", offset.x + 5,  offset.y - 5 + oy, 6)
+        print("❎", offset.x + 35, offset.y - 5 + xy, 6)
 
         // Display prev. cur. nex. colors.
+        rectbord(offset.x,      offset.y + 2 + oy, offset.x + 15, offset.y + 12, this.colors.last,    0)
+        rectline(offset.x + 15, offset.y,          15,            12,            this.colors.current, 0)
+        rectbord(offset.x + 30, offset.y + 2 + xy, offset.x + 45, offset.y + 12, this.colors.next,    0)
+    end,
 
+    display_instructions=function(this)
+        print("⬆️⬇️", this.x + 4, this.y + 5, 5)
+
+        dy = 0 if btn(3) or btn(1) then dy = 1 end
+        uy = 0 if btn(2) or btn(0) then uy = 1 end
         
-        rectbord(offset.x,      offset.y - oc + 8, offset.x + 15, offset.y + 12, this.colors.last,    0)
-        rectline(offset.x + 15, offset.y, 15, 12, this.colors.current, 0)
-        rectbord(offset.x + 30, offset.y - xc + 8, offset.x + 45, offset.y + 12, this.colors.next,    0)
-        //
+        print("⬇️", this.x + 12,  this.y + 4 + dy, 6)
+        print("⬆️", this.x + 4, this.y + 4 + uy, 6)
 
+        print("NAVIGATE", this.x + 4, this.y + 10, 0)
 
-        
-        
+        xy = 0 if btn(5) then xy = 1 end
 
-        //rectline(this.x,      this.y + 23, 15, this.sy, this.colors.last, 0)
-        //rectline(this.x + 15, this.y + 23, 29, this.sy, this.colors.current, 0)
-        //rectline(this.x + 29, this.y + 23, 45, this.sy, this.colors.next, 0)
+        print("❎", this.x + 4, this.y + 18, 5)
+        print("❎", this.x + 4, this.y + 17 + xy, 6)
+
+        print("SELECT", this.x + 4, this.y + 23, 0)
     end,
 
     _draw=function(this)
         rectline(this.x, this.y, this.sx, this.sy, 3, 0)
-        this:display_colors()
+        if state.in_menu then this:display_instructions() else this:display_colors() end
     end
 }
 
