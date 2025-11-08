@@ -6,7 +6,8 @@
 outline_color = 0
 background_color = 1
 pane_color = 3
-transition_color = 0
+transition_color = 2
+text_color = 0
 
 function rectline(x, y, sx, sy, fill, outline)
     rectfill(x, y, x + sx, y + sy, fill)
@@ -153,7 +154,6 @@ state = {
 
 // The space that holds the current art and runs everything relating to it.
 grid = {
-    art = {},
     grid_size = 10,
 
     reset_canvas=function(this)
@@ -266,7 +266,18 @@ grid = {
         {5,5,5,5,5,5,13,13,5,5,},
         {5,5,5,5,5,5,5,5,5,5,},
         },
-
+        {
+        {0,0,0,0,0,0,0,0,0,0,},
+        {0,0,0,0,0,0,0,0,0,0,},
+        {0,0,0,0,0,0,0,0,1,0,},
+        {0,13,13,13,0,0,1,1,1,0,},
+        {0,0,13,12,2,13,13,13,13,0,},
+        {0,0,13,13,2,13,1,1,1,0,},
+        {0,0,13,12,2,13,13,13,13,0,},
+        {0,13,13,13,0,0,1,1,1,0,},
+        {0,0,0,0,0,0,0,0,1,0,},
+        {0,0,0,0,0,0,0,0,0,0,},
+        },
     },
 
 }
@@ -342,21 +353,21 @@ game_pane = {
     state = "welcome",
     states = {
         welcome=function (this)
-            print("pixel art panic", this.x + 5, this.y + 5)
-            print("-", this.x + 5, this.y + 12)
-            print("made for hackclub", this.x + 5, this.y + 19)
-            print("siege week 6", this.x + 5, this.y + 28)
-            print("by baton0", this.x + 5, this.y + 72)
+            print("pixel art panic", this.x + 5, this.y + 5, text_color)
+            print("-", this.x + 5, this.y + 12, text_color)
+            print("made for hackclub", this.x + 5, this.y + 19, text_color)
+            print("siege week 6", this.x + 5, this.y + 28, text_color)
+            print("by baton0", this.x + 5, this.y + 72, text_color)
         end,
         score=function(this)
-            print("ran out of time!", this.x + 5, this.y + 5)
-            print("-", this.x + 5, this.y + 12)
+            print("ran out of time!", this.x + 5, this.y + 5, text_color)
+            print("-", this.x + 5, this.y + 12, text_color)
         
-            print("reached level "..state.current_level, this.x + 5, this.y + 19)
-            print("high: level "..state.highlevel, this.x + 5, this.y + 27)
+            print("reached level "..state.current_level, this.x + 5, this.y + 19, text_color)
+            print("high: level "..state.highlevel, this.x + 5, this.y + 27, text_color)
 
-            print("score: "..state.score, this.x + 5, this.y + 41)
-            print("highscore: "..state.highscore, this.x + 5, this.y + 49)
+            print("score: "..state.score, this.x + 5, this.y + 41, text_color)
+            print("highscore: "..state.highscore, this.x + 5, this.y + 49, text_color)
         end,
         canvas=function(this)
             for i=1,grid.grid_size do
@@ -433,14 +444,14 @@ direct_pane = {
             print("⬇️", this.x + 12,  this.y + 4 + dy, 6)
             print("⬆️", this.x + 4, this.y + 4 + uy, 6)
 
-            print("NAVIGATE", this.x + 4, this.y + 10, 0)
+            print("NAVIGATE", this.x + 4, this.y + 10, text_color)
 
             xy = 0 if btn(5) then xy = 1 end
 
             print("❎", this.x + 4, this.y + 18, 5)
             print("❎", this.x + 4, this.y + 17 + xy, 6)
 
-            print("SELECT", this.x + 4, this.y + 23, 0)
+            print("SELECT", this.x + 4, this.y + 23, text_color)
         end,
 
         colors=function (this)
@@ -449,7 +460,7 @@ direct_pane = {
             xy = 0 if btn(5) then xy = 1 end 
             oy = 0 if btn(4) then oy = 1 end
 
-            print("<- DRAW!", this.x + 3, this.y + 4, 0)
+            print("<- DRAW!", this.x + 3, this.y + 4, text_color)
 
             print("🅾️", offset.x + 5,  offset.y - 4, 5)
             print("❎", offset.x + 35, offset.y - 4, 5)
@@ -527,13 +538,13 @@ menu_pane = {
             end,
 
             _draw=function(this, menu)
-                print("-menu-", this.x + 5, this.y + 5, 0)
+                print("-menu-", this.x + 5, this.y + 5, text_color)
                 for i=1,#menu.options do
 
                     message = menu.options[i] 
                     if i == this.index then message = ">"..tostr(menu.options[i]) end
 
-                    print(message, this.x + 5, this.y + 7 +  (10 * i), 0)
+                    print(message, this.x + 5, this.y + 7 +  (10 * i), text_color)
                 end
             end
         },
@@ -542,27 +553,29 @@ menu_pane = {
         {
             options = {},
 
-            _update=function(this, menu)
+            score = 0,
 
+            _update=function(this, menu)
+                menu.score = move_towards(menu.score, state.score, flr(abs(state.score - menu.score)/8))
             end,
 
             _draw=function (this, menu)
         
-                print("time", this.x + 5, this.y + 6, 0)
+                print("time", this.x + 5, this.y + 6, text_color)
                 print(ceil(state.draw_time), this.x + 5, this.y + 15)
 
                 print("level", this.x + 5, this.y + 27)
                 print(state.current_level, this.x + 5, this.y + 36)
 
                 print("score", this.x + 5, this.y + 48)
-                print(state.score, this.x + 5, this.y + 57, 0)
+                print(menu.score, this.x + 5, this.y + 57, text_color)
 
             end,
         },
 
         optns = 
         {
-            options = {"screen", "outln", "pane", "back"},
+            options = {"screen", "outln", "pane", "text", "trnstn", "back"},
 
             _update=function (this, menu)
                 // Selecting a menu item
@@ -574,6 +587,10 @@ menu_pane = {
                         outline_color += 1 if outline_color > 15 then outline_color = 0 end
                     elseif menu.options[this.index] == "pane" then
                         pane_color += 1 if pane_color > 15 then pane_color = 0 end
+                    elseif menu.options[this.index] == "text" then
+                        text_color += 1 if text_color > 15 then text_color = 0 end
+                    elseif menu.options[this.index] == "trnstn" then
+                        transition_color += 1 if transition_color > 15 then transition_color = 0 end
                     elseif menu.options[this.index] == "back" then
                         
                         state.transition_calls["optns2main"]=function()
@@ -585,13 +602,13 @@ menu_pane = {
             end,
 
             _draw=function (this, menu)
-                print("-optns-", this.x + 3, this.y + 5, 0)
+                print("-optns-", this.x + 3, this.y + 5, text_color)
                 for i=1,#menu.options do
 
                     message = menu.options[i] 
                     if i == this.index then message = ">"..tostr(menu.options[i]) end
 
-                    print(message, this.x + 3, this.y + 7 +  (10 * i), 0)
+                    print(message, this.x + 3, this.y + 7 +  (10 * i), text_color)
                 end
             end
         },
@@ -618,19 +635,22 @@ menu_pane = {
                             hint_pane:change_state("hint")
                         end
                 elseif menu.options[this.index] == "menu" then
-                        this:change_menu("main")
+                        state:transition({menu_pane})
+                        state.transition_calls["lose2menu"]=function()
+                            this:change_menu("main")
+                        end
                     end
                 end
             end,
 
             _draw=function (this, menu)
-                print("-lost-", this.x + 5, this.y + 5, 0)
+                print("-lost-", this.x + 5, this.y + 5, text_color)
                 for i=1,#menu.options do
 
                     message = menu.options[i] 
                     if i == this.index then message = ">"..tostr(menu.options[i]) end
 
-                    print(message, this.x + 5, this.y + 7 +  (10 * i), 0)
+                    print(message, this.x + 5, this.y + 7 +  (10 * i), text_color)
                 end
             end
         }

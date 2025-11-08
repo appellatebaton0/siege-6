@@ -31,3 +31,4 @@ through colors.
 - Added transitions between screens, and changed all the panes to be state machines like the menu for that.
 - Added music & SFX
 - The game is done now, so I'm just going to ***polish***
+### Friday - Polish & Submission
