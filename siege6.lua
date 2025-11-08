@@ -1,6 +1,3 @@
--- Pixel Art Panic
--- Baton0
-
 // Options variables
 
 outline_color = 0
@@ -195,7 +192,6 @@ grid = {
         "F181F181F181F181F381F181F181F181F381F181F181F181F381F181F181F181F381F181F181F183F181F181F181F482F181F185F381F68AFA",
         "5G9156655571617162556454D151D454D311D454D211D151D154D456D152D153",
         "0DD103D105D505D1C1D1C1D1062307D30611D111D1110511D111D1110412D111D1120B",
-
     },
 
 }
@@ -446,11 +442,7 @@ menu_pane = {
                         end
                         
                 elseif menu.options[this.index] == "optns" then
-                        state:transition({menu_pane})
-                        state.transition_calls["menu2optns"]=function()
-                            this:change_menu("optns")
-                        end
-                        
+                        this:change_menu("optns")
                     end
                 end
             end,
@@ -511,10 +503,7 @@ menu_pane = {
                         transition_color += 1 if transition_color > 15 then transition_color = 0 end
                     elseif menu.options[this.index] == "back" then
                         
-                        state.transition_calls["optns2main"]=function()
-                            this:change_menu("main")
-                        end
-                        state:transition({menu_pane})
+                        this:change_menu("main")
                     end
                 end
             end,
@@ -553,10 +542,7 @@ menu_pane = {
                             hint_pane:change_state("hint")
                         end
                 elseif menu.options[this.index] == "menu" then
-                        state:transition({menu_pane})
-                        state.transition_calls["lose2menu"]=function()
-                            this:change_menu("main")
-                        end
+                        this:change_menu("main")
                     end
                 end
             end,
@@ -571,8 +557,7 @@ menu_pane = {
                     print(message, this.x + 5, this.y + 7 +  (10 * i), text_color)
                 end
             end
-        }
-
+        },
 
     },
 
@@ -646,8 +631,8 @@ cursor = {
     end,
 
     cycle_color=function(this)
-        if btnp(5) then this.color += 1 sfx(2) end
-        if btnp(4) then this.color -= 1 sfx(2) end
+        if btnp(5) then this.color += 1 sfx(4) end
+        if btnp(4) then this.color -= 1 sfx(4) end
 
         if this.color > 15 then this.color = 0 end
         if this.color < 0 then this.color = 15 end
